@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ContactForm } from './ContactForm';
 import { ContactList } from './ContactList';
 import { Filter } from './Filter';
@@ -7,135 +7,87 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row, Col } from 'react-bootstrap';
 
 /**
- * Main application component representing the Phonebook.
+ * Main App component representing the Phonebook application.
+ * @component
  */
-export default class App extends Component {
-  constructor(props) {
-    super(props);
+const App = () => {
+  // Retrieve stored contacts from localStorage or initialize as an empty array.
+  const storedContacts = localStorage.getItem('myPhonebook');
+  const initialContacts = storedContacts ? JSON.parse(storedContacts) : [];
 
-    /**
-     * @type {Object}
-     * @property {Array} contacts - Array containing the contacts.
-     * @property {string} filter - The filter string for contact search.
-     */
-    this.state = {
-      contacts: [],
-      filter: '',
-    };
+  // State variables for managing contacts and the filter.
+  const [contacts, setContacts] = useState(initialContacts);
+  const [filter, setFilter] = useState('');
 
-    this.addContact = this.addContact.bind(this);
-    this.handleFilterChange = this.handleFilterChange.bind(this);
-    this.handleDeleteContact = this.handleDeleteContact.bind(this);
-    this.handleUpdateContacts = this.handleUpdateContacts.bind(this);
-  }
+  // Update localStorage when contacts change.
+  useEffect(() => {
+    localStorage.setItem('myPhonebook', JSON.stringify(contacts));
+  }, [contacts]);
 
   /**
-   * Lifecycle method called after the component is mounted.
-   * Retrieves stored contacts from localStorage and updates the component state.
+   * Add a new contact to the list.
+   * @param {object} newContact - The new contact to be added.
    */
-  componentDidMount() {
-    // Retrieve stored contacts from localStorage
-    const storedContacts = localStorage.getItem('myPhonebook');
-
-    // If data is found, parse it back into an array of objects and set it in the state
-    if (storedContacts) {
-      this.setState({ contacts: JSON.parse(storedContacts) });
-    }
-  }
-
-  /**
-   * Checks if two values are equal by comparing their JSON representations.
-   *
-   * @param {*} a - The first value to be compared.
-   * @param {*} b - The second value to be compared.
-   * @returns {boolean} - Returns true if the JSON representations of the values are equal, otherwise returns false.
-   */
-  equalsCheck = (a, b) => {
-    return JSON.stringify(a) === JSON.stringify(b);
+  const addContact = newContact => {
+    setContacts(prevContacts => [...prevContacts, newContact]);
   };
 
   /**
-   * Lifecycle method called after the component updates.
-   * Saves the updated contacts data to localStorage when the state changes.
-   *
-   * @param {Object} prevProps - The previous props before the update.
-   * @param {Object} prevState - The previous state before the update.
+   * Handle filter input change.
+   * @param {object} e - The event object containing the new filter value.
    */
-  componentDidUpdate(_prevProps, prevState) {
-    // Save data to localStorage when the contacts state changes
-    if (!this.equalsCheck(prevState.contacts, this.state.contacts)) {
-      localStorage.setItem('myPhonebook', JSON.stringify(this.state.contacts));
-    }
-  }
+  const handleFilterChange = e => {
+    setFilter(e.target.value.toLowerCase());
+  };
 
   /**
-   * Add a new contact to the state.
-   *
-   * @param {Object} newContact - The new contact to be added.
-   */
-  addContact(newContact) {
-    this.setState(prevState => ({
-      contacts: [...prevState.contacts, newContact],
-    }));
-  }
-
-  /**
-   * Handle changes in the filter input.
-   *
-   * @param {Object} e - The event object.
-   */
-  handleFilterChange(e) {
-    this.setState({ filter: e.target.value.toLowerCase() });
-  }
-
-  /**
-   * Handle the deletion of a contact.
-   *
+   * Delete a contact with the given ID.
    * @param {string} contactId - The ID of the contact to be deleted.
    */
-  handleDeleteContact(contactId) {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== contactId),
-    }));
-  }
+  const handleDeleteContact = contactId => {
+    setContacts(prevContacts =>
+      prevContacts.filter(contact => contact.id !== contactId)
+    );
+  };
 
   /**
-   * Handle updating contacts in the state.
-   *
-   * @param {Array} updatedContacts - The updated array of contacts.
+   * Update the contacts list with the provided array of contacts.
+   * @param {array} updatedContacts - The updated array of contacts.
    */
-  handleUpdateContacts(updatedContacts) {
-    // Update the state with the new contacts array
-    this.setState({ contacts: updatedContacts });
-  }
+  const handleUpdateContacts = updatedContacts => {
+    setContacts(updatedContacts);
+  };
 
-  render() {
-    const { contacts, filter } = this.state;
+  // Filter contacts based on the current filter value.
+  const filteredContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(filter)
+  );
 
-    const filteredContacts = contacts.filter(contact =>
-      contact.name.toLowerCase().includes(filter)
-    );
+  // Render the Phonebook application UI.
+  return (
+    <Container className="d-flex justify-content-center mt-5 mb-5">
+      <Row className="justify-content-md-center">
+        <Col>
+          <h1>Phonebook</h1>
 
-    return (
-      <Container className="d-flex justify-content-center mt-5 mb-5">
-        <Row className="justify-content-md-center">
-          <Col>
-            <h1>Phonebook</h1>
+          {/* ContactForm component for adding new contacts */}
+          <ContactForm addContact={addContact} contacts={contacts} />
 
-            <ContactForm
-              addContact={this.addContact}
-              contacts={this.state.contacts}
-            />
-            <h2 className="mt-3">Contacts</h2>
-            <Filter value={filter} onChange={this.handleFilterChange} />
-            <ContactList
-              contacts={filteredContacts}
-              onDeleteContact={this.handleDeleteContact}
-              onUpdateContacts={this.handleUpdateContacts}
-            />
-          </Col>
-        </Row>
-      </Container>
-    );
-  }
-}
+          <h2 className="mt-3">Contacts</h2>
+
+          {/* Filter component for filtering contacts */}
+          <Filter value={filter} onChange={handleFilterChange} />
+
+          {/* ContactList component for displaying the list of contacts */}
+          <ContactList
+            contacts={filteredContacts}
+            onDeleteContact={handleDeleteContact}
+            onUpdateContacts={handleUpdateContacts}
+          />
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+export default App;
