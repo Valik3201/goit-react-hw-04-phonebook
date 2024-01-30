@@ -4,10 +4,7 @@ This React application serves as a straightforward contact management system,
 offering essential features for adding, searching, and deleting contacts.
 
 > [!NOTE]\
-> Contacts are now stored persistently using the browser's localStorage, ensuring
-> that the contact list remains accessible even after refreshing or closing the application.
-> The integration of React lifecycle methods ensures a smooth and seamless experience
-> for managing and retaining contact data.
+> The code has been refactored using React hooks.
 
 ## Features
 
