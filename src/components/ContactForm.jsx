@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
 import PropTypes from 'prop-types';
 
@@ -15,18 +15,9 @@ import { Form, Row, Col, Button, FloatingLabel } from 'react-bootstrap';
  */
 export const ContactForm = ({ addContact, contacts }) => {
   // State variables for managing input fields and modal visibility.
-  const [name, setName] = useState('');
-  const [number, setNumber] = useState('');
+  const nameRef = useRef(null);
+  const numRef = useRef(null);
   const [modalShow, setModalShow] = useState(false);
-
-  /**
-   * Handle input change for name and number fields.
-   * @param {Object} e - The event object containing the input value and name.
-   */
-  const handleChange = e => {
-    const { name, value } = e.target;
-    name === 'name' ? setName(value) : setNumber(value);
-  };
 
   /**
    * Handle form submission.
@@ -35,8 +26,11 @@ export const ContactForm = ({ addContact, contacts }) => {
   const handleFormSubmit = e => {
     e.preventDefault();
 
+    const enteredName = nameRef.current.value;
+    const enteredNum = numRef.current.value;
+
     // Check if a contact with the same name already exists.
-    if (contacts.some(contact => contact.name === name)) {
+    if (contacts.some(contact => contact.name === enteredName)) {
       setModalShow(true);
       return;
     }
@@ -44,14 +38,14 @@ export const ContactForm = ({ addContact, contacts }) => {
     // Create a new contact object with a unique ID.
     const newContact = {
       id: nanoid(),
-      name,
-      number,
+      name: enteredName,
+      number: enteredNum,
     };
 
     // Add the new contact and reset input fields.
     addContact(newContact);
-    setName('');
-    setNumber('');
+    nameRef.current.value = '';
+    numRef.current.value = '';
   };
 
   // Render the form with input fields for name and number.
@@ -69,8 +63,7 @@ export const ContactForm = ({ addContact, contacts }) => {
               <Form.Control
                 type="text"
                 name="name"
-                value={name}
-                onChange={handleChange}
+                ref={nameRef}
                 autoComplete="off"
                 pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
                 title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
@@ -89,8 +82,7 @@ export const ContactForm = ({ addContact, contacts }) => {
               <Form.Control
                 type="tel"
                 name="number"
-                value={number}
-                onChange={handleChange}
+                ref={numRef}
                 autoComplete="off"
                 pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
                 title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
@@ -114,7 +106,7 @@ export const ContactForm = ({ addContact, contacts }) => {
       {/* ModalAlert component for displaying a modal when a duplicate name is entered */}
       <ModalAlert
         show={modalShow}
-        name={name}
+        name={nameRef.current?.value}
         onHide={() => setModalShow(false)}
       />
     </>
